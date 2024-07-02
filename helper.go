@@ -3,6 +3,8 @@ package ethers_helper
 import (
 	"crypto/ecdsa"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"strings"
 )
@@ -37,4 +39,12 @@ func GetAddressFromPrivateKey(_pk string) (string, error) {
 
 	pkToAddress := crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
 	return pkToAddress, nil
+}
+
+func GetFromAddressByTransaction(signer types.Signer, tx *types.Transaction) (common.Address, error) {
+	if signer == nil {
+		signer = types.NewCancunSigner(tx.ChainId())
+	}
+	from, err := types.Sender(signer, tx)
+	return from, err
 }
