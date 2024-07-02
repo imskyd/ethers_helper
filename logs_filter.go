@@ -6,13 +6,37 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"log"
 	"math/big"
 	"time"
 )
 
-func FilterBlockLogs(rpc string, fromBlock, toBlock, perSearchRange int64, address, topic string, filterFunc func(types.Log)) {
-	client, _ := ethclient.Dial(rpc)
+type FilterLogCondition struct {
+	Addresses []string
+	Topics    []string
+}
 
+func (c *FilterLogCondition) FilterQueryAddresses() []common.Address {
+	var ads []common.Address
+	for _, address := range c.Addresses {
+		ads = append(ads, common.HexToAddress(address))
+	}
+	return ads
+}
+
+func (c *FilterLogCondition) FilterQueryGetTopics() []common.Hash {
+	var topics []common.Hash
+	for _, topic := range c.Topics {
+		topics = append(topics, common.HexToHash(topic))
+	}
+	return topics
+}
+
+func FilterBlockLogs(rpc string, fromBlock, toBlock, perSearchRange int64, condition FilterLogCondition, filterFunc func(types.Log)) {
+	client, err := ethclient.Dial(rpc)
+	if err != nil {
+		log.Fatalf("ethclient.Dial err: %s", err.Error())
+	}
 	var from = fromBlock
 	var innerTo = from + perSearchRange
 
@@ -24,11 +48,11 @@ func FilterBlockLogs(rpc string, fromBlock, toBlock, perSearchRange int64, addre
 
 	for from <= to {
 		q := ethereum.FilterQuery{
-			Addresses: []common.Address{common.HexToAddress(address)},
+			Addresses: condition.FilterQueryAddresses(),
 			FromBlock: big.NewInt(from),
 			ToBlock:   big.NewInt(innerTo),
 		}
-		q.Topics = append(q.Topics, []common.Hash{common.HexToHash(topic)})
+		q.Topics = append(q.Topics, condition.FilterQueryGetTopics())
 
 		fLogs, err := client.FilterLogs(context.Background(), q)
 		if err != nil {
