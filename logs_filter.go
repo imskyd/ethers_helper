@@ -56,6 +56,7 @@ func FilterBlockLogs(rpc string, fromBlock, toBlock, perSearchRange int64, condi
 
 		fLogs, err := client.FilterLogs(context.Background(), q)
 		if err != nil {
+			log.Printf("client.FilterLogs err: %s", err.Error())
 			time.Sleep(time.Second)
 			continue
 		}
