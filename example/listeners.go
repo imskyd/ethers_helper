@@ -37,3 +37,20 @@ func BlockListen() {
 		}
 	}
 }
+
+func EventListen() {
+	var condition ethers_helper.FilterLogCondition
+	logChan, sub, err := ethers_helper.ListenEvent("", condition)
+	if err != nil {
+		log.Panicf(err.Error())
+	}
+
+	for {
+		select {
+		case subErr := <-sub.Err():
+			fmt.Println(subErr)
+		case l := <-logChan:
+			fmt.Println(l)
+		}
+	}
+}

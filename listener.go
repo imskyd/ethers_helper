@@ -29,3 +29,17 @@ func ListenBlock(wssRpc string) (chan *types.Header, ethereum.Subscription, erro
 	sub, subErr := client.SubscribeNewHead(context.Background(), headers)
 	return headers, sub, subErr
 }
+
+func ListenEvent(wssRpc string, condition FilterLogCondition) (chan types.Log, ethereum.Subscription, error) {
+	client, dialErr := ethclient.Dial(wssRpc)
+	if dialErr != nil {
+		return nil, nil, dialErr
+	}
+	q := ethereum.FilterQuery{
+		Addresses: condition.FilterQueryAddresses(),
+	}
+	q.Topics = append(q.Topics, condition.FilterQueryGetTopics())
+	chann := make(chan types.Log)
+	sub, subErr := client.SubscribeFilterLogs(context.Background(), q, chann)
+	return chann, sub, subErr
+}
